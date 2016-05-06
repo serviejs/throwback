@@ -1,0 +1,53 @@
+{
+  "name": "throwback",
+  "version": "0.0.0",
+  "description": "An asynchronous middleware pattern",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "LICENSE"
+  ],
+  "scripts": {
+    "lint": "# TODO",
+    "build": "rm -rf dist && tsc",
+    "test-spec": "blue-tape 'dist/**/*.spec.js' | tap-spec",
+    "test-cov": "istanbul cover --print none -x '*.spec.js' node_modules/blue-tape/bin/blue-tape.js -- 'dist/**/*.spec.js' | tap-spec",
+    "test": "npm run build && npm run lint && npm run test-cov",
+    "prepublish": "typings install && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/blakeembrey/throwback.git"
+  },
+  "keywords": [
+    "middleware",
+    "async",
+    "compose",
+    "promise",
+    "ware",
+    "layer"
+  ],
+  "author": {
+    "name": "Blake Embrey",
+    "email": "hello@blakeembrey.com",
+    "url": "http://blakeembrey.me"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blakeembrey/throwback/issues"
+  },
+  "homepage": "https://github.com/blakeembrey/throwback",
+  "devDependencies": {
+    "blue-tape": "^0.2.0",
+    "bluebird": "^3.3.5",
+    "chai": "^3.2.0",
+    "istanbul": "^0.3.17",
+    "tap-spec": "^4.1.1",
+    "typescript": "^1.5.3",
+    "typings": "^0.8.1"
+  },
+  "dependencies": {
+    "any-promise": "^1.2.0"
+  }
+}
