@@ -6,6 +6,7 @@
   "typings": "dist/index.d.ts",
   "files": [
     "dist/",
+    "typings.json",
     "README.md",
     "LICENSE"
   ],
