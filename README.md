@@ -18,7 +18,7 @@ npm install throwback --save
 Compose asynchronous functions (promise-based)
 
 ```js
-import { compose, resolve } from 'throwback'
+import { compose } from 'throwback'
 
 const fn = compose([
   async function (req, res, next) {
@@ -39,8 +39,8 @@ const fn = compose([
   }
 ])
 
-// Or replace the callback here with `resolve`, which returns
-// `Promise.resolve()` triggering the bubble back up the middleware stack.
+// Callback runs at the end of the stack, before
+// the middleware bubbles back to the beginning.
 fn({}, {}, function (req, res) {
   console.log(3)
 
