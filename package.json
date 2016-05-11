@@ -6,7 +6,6 @@
   "typings": "dist/index.d.ts",
   "files": [
     "dist/",
-    "typings.json",
     "README.md",
     "LICENSE"
   ],
@@ -50,6 +49,6 @@
     "typings": "^0.8.1"
   },
   "dependencies": {
-    "any-promise": "^1.2.0"
+    "any-promise": "^1.3.0"
   }
 }
