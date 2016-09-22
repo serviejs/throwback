@@ -3,6 +3,6 @@
     "blue-tape": "registry:npm/blue-tape#0.2.0+20160418015423"
   },
   "globalDependencies": {
-    "node": "registry:dt/node#4.0.0+20160501135006"
+    "node": "registry:env/node#6.0.0+20160918225031"
   }
 }
