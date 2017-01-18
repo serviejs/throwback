@@ -2,16 +2,24 @@
   "compilerOptions": {
     "target": "es5",
     "outDir": "dist",
+    "rootDir": "src",
     "module": "commonjs",
     "declaration": true,
     "noImplicitAny": true,
-    "removeComments": true,
+    "removeComments": false,
     "sourceMap": true,
-    "inlineSources": true
+    "inlineSources": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["es2015"],
+    "typeRoots": [
+      "typings/modules",
+      "typings/globals"
+    ]
   },
-  "files": [
-    "src/index.ts",
-    "src/index.spec.ts",
-    "typings/index.d.ts"
+  "include": [
+    "src/**/*"
   ]
 }

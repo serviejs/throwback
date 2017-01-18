@@ -1,12 +1,11 @@
 import test = require('blue-tape')
-import Promise = require('any-promise')
 import { compose, NextFunction } from './index'
 
 test('async middleware', t => {
   t.test('middleware', t => {
     const arr: number[] = []
 
-    const fn = compose<any>([
+    const fn = compose([
       function (req: any, res: any, next: NextFunction<string>) {
         arr.push(1)
 
@@ -44,12 +43,12 @@ test('async middleware', t => {
   t.test('branch middleware by composing', t => {
     const arr: number[] = []
 
-    const fn = compose<void>([
-      compose<void>([
+    const fn = compose([
+      compose([
         function (ctx: any, next: NextFunction<void>) {
           arr.push(1)
 
-          return next().catch(err => {
+          return next().catch(() => {
             arr.push(3)
           })
         },
@@ -73,17 +72,19 @@ test('async middleware', t => {
   })
 
   t.test('throw when input is not an array', t => {
-    t.throws(() => {
-      (compose as any)('test')
-    }, 'Expected middleware to be an array, got string')
+    t.throws(
+      () => (compose as any)('test'),
+      'Expected middleware to be an array, got string'
+    )
 
     t.end()
   })
 
   t.test('throw when values are not functions', t => {
-    t.throws(() => {
-      (compose as any)([1, 2, 3])
-    }, 'Expected middleware to contain functions, got number')
+    t.throws(
+      () => (compose as any)([1, 2, 3]),
+      'Expected middleware to contain functions, got number'
+    )
 
     t.end()
   })
@@ -91,16 +92,17 @@ test('async middleware', t => {
   t.test('throw when next is not a function', t => {
     const fn = compose([])
 
-    t.throws(() => {
-      fn(true)
-    }, 'Expected the last argument to be `next()`, got boolean')
+    t.throws(
+      () => fn(true as any),
+      'Expected the last argument to be `next()`, got boolean'
+    )
 
     t.end()
   })
 
   t.test('throw when calling next() multiple times', t => {
     const fn = compose([
-      function (value, next) {
+      function (value: any, next: NextFunction<any>) {
         return next().then(next)
       }
     ])

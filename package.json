@@ -10,7 +10,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "lint": "# TODO",
+    "lint": "tslint \"src/**/*.ts\"",
     "build": "rm -rf dist && tsc",
     "test-spec": "blue-tape 'dist/**/*.spec.js' | tap-spec",
     "test-cov": "istanbul cover --print none -x '*.spec.js' node_modules/blue-tape/bin/blue-tape.js -- 'dist/**/*.spec.js' | tap-spec",
@@ -45,10 +45,9 @@
     "chai": "^3.2.0",
     "istanbul": "^0.4.4",
     "tap-spec": "^4.1.1",
+    "tslint": "^4.3.1",
+    "tslint-config-standard": "^2.0.0",
     "typescript": "^2.0.3",
-    "typings": "^1.3.0"
-  },
-  "dependencies": {
-    "any-promise": "^1.3.0"
+    "typings": "^2.1.0"
   }
 }
