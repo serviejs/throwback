@@ -1,9 +1,9 @@
 # Throwback
 
-[![NPM version][npm-image]][npm-url]
-[![NPM downloads][downloads-image]][downloads-url]
-[![Build status][travis-image]][travis-url]
-[![Test coverage][coveralls-image]][coveralls-url]
+[![NPM version](https://img.shields.io/npm/v/throwback.svg?style=flat)](https://npmjs.org/package/throwback)
+[![NPM downloads](https://img.shields.io/npm/dm/throwback.svg?style=flat)](https://npmjs.org/package/throwback)
+[![Build status](https://img.shields.io/travis/serviejs/throwback.svg?style=flat)](https://travis-ci.org/serviejs/throwback)
+[![Test coverage](https://img.shields.io/coveralls/serviejs/throwback.svg?style=flat)](https://coveralls.io/r/serviejs/throwback?branch=master)
 
 > An asynchronous middleware pattern.
 
@@ -55,12 +55,3 @@ Built for [`popsicle`](https://github.com/blakeembrey/popsicle) and inspired by 
 ## License
 
 MIT
-
-[npm-image]: https://img.shields.io/npm/v/throwback.svg?style=flat
-[npm-url]: https://npmjs.org/package/throwback
-[downloads-image]: https://img.shields.io/npm/dm/throwback.svg?style=flat
-[downloads-url]: https://npmjs.org/package/throwback
-[travis-image]: https://img.shields.io/travis/blakeembrey/throwback.svg?style=flat
-[travis-url]: https://travis-ci.org/blakeembrey/throwback
-[coveralls-image]: https://img.shields.io/coveralls/blakeembrey/throwback.svg?style=flat
-[coveralls-url]: https://coveralls.io/r/blakeembrey/throwback?branch=master

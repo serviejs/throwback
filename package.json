@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/blakeembrey/throwback.git"
+    "url": "git://github.com/serviejs/throwback.git"
   },
   "keywords": [
     "middleware",
@@ -36,9 +36,9 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/blakeembrey/throwback/issues"
+    "url": "https://github.com/serviejs/throwback/issues"
   },
-  "homepage": "https://github.com/blakeembrey/throwback",
+  "homepage": "https://github.com/serviejs/throwback",
   "devDependencies": {
     "blue-tape": "^1.0.0",
     "bluebird": "^3.3.5",
