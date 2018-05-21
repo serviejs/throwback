@@ -48,15 +48,17 @@ function debugMiddleware <T, U> (middleware: Array<Middleware<T, U>>): Composed<
       function dispatch (pos: number): Promise<U> {
         const fn = middleware[pos] || done
 
-        if (pos > middleware.length) {
-          throw new TypeError('Composed `done(ctx)` function should not call `next()`')
-        }
-
         index = pos
 
         return new Promise(resolve => {
           const result = fn(ctx, function next (newCtx?: T) {
-            if (index > pos) throw new TypeError('`next()` called multiple times')
+            if (pos < index) {
+              throw new TypeError('`next()` called multiple times')
+            }
+
+            if (pos > middleware.length) {
+              throw new TypeError('Composed `done(ctx)` function should not call `next()`')
+            }
 
             if (newCtx === undefined) return dispatch(pos + 1)
 
