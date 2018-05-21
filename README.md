@@ -41,10 +41,10 @@ const fn = compose([
 
 // Callback runs at the end of the stack, before
 // the middleware bubbles back to the beginning.
-fn({}, function (req, res) {
+fn({}, function (ctx) {
   console.log(3)
 
-  res.status = 404
+  ctx.status = 404
 })
 ```
 
