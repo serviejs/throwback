@@ -1,25 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "outDir": "dist",
-    "rootDir": "src",
-    "module": "commonjs",
-    "declaration": true,
-    "noImplicitAny": true,
-    "removeComments": false,
-    "sourceMap": true,
-    "inlineSources": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "strictNullChecks": true,
-    "forceConsistentCasingInFileNames": true,
+    "target": "es2015",
     "lib": ["es2015"],
-    "typeRoots": [
-      "typings/modules",
-      "typings/globals"
-    ]
-  },
-  "include": [
-    "src/**/*"
-  ]
+    "rootDir": "src",
+    "outDir": "dist",
+    "module": "commonjs",
+    "strict": true,
+    "declaration": true,
+    "sourceMap": true,
+    "inlineSources": true
+  }
 }

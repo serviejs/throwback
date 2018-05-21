@@ -1,65 +1,107 @@
-export type NextFunction <R> = () => Promise<R>
-
-export type Middleware5 <T1, T2, T3, T4, T5, R> = (arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5, next: NextFunction<R>) => R | Promise<R>
-export type Middleware4 <T1, T2, T3, T4, R> = (arg1: T1, arg2: T2, arg3: T3, arg4: T4, next: NextFunction<R>) => R | Promise<R>
-export type Middleware3 <T1, T2, T3, R> = (arg1: T1, arg2: T2, arg3: T3, next: NextFunction<R>) => R | Promise<R>
-export type Middleware2 <T1, T2, R> = (arg1: T1, arg2: T2, next: NextFunction<R>) => R | Promise<R>
-export type Middleware1 <T1, R> = (arg1: T1, next: NextFunction<R>) => R | Promise<R>
-export type Middleware0 <R> = (next: NextFunction<R>) => R | Promise<R>
-export type Middleware <R> = (...args: any[]) => R | Promise<R>
-
-export type OutFunction5 <T1, T2, T3, T4, T5, R> = (arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5, next: Middleware5<T1, T2, T3, T4, T5, R>) => Promise<R>
-export type OutFunction4 <T1, T2, T3, T4, R> = (arg1: T1, arg2: T2, arg3: T3, arg4: T4, next: Middleware4<T1, T2, T3, T4, R>) => Promise<R>
-export type OutFunction3 <T1, T2, T3, R> = (arg1: T1, arg2: T2, arg3: T3, next: Middleware3<T1, T2, T3, R>) => Promise<R>
-export type OutFunction2 <T1, T2, R> = (arg1: T1, arg2: T2, next: Middleware2<T1, T2, R>) => Promise<R>
-export type OutFunction1 <T1, R> = (arg1: T1, next: Middleware1<T1, R>) => Promise<R>
-export type OutFunction0 <R> = (next: Middleware0<R>) => Promise<R>
-export type OutFunction <R> = (...args: any[]) => Promise<R>
+/**
+ * Next function supports optional `ctx` replacement for following middleware.
+ */
+export type Next <T, U> = (ctx?: T) => Promise<U>
 
 /**
- * Compose an array of middleware functions into a chain.
+ * Middleware function pattern.
  */
-export function compose <R> (middleware: Array<Middleware0<R>>): OutFunction0<R>
-export function compose <T1, R> (middleware: Array<Middleware1<T1, R>>): OutFunction1<T1, R>
-export function compose <T1, T2, R> (middleware: Array<Middleware2<T1, T2, R>>): OutFunction2<T1, T2, R>
-export function compose <T1, T2, T3, R> (middleware: Array<Middleware3<T1, T2, T3, R>>): OutFunction3<T1, T2, T3, R>
-export function compose <T1, T2, T3, T4, R> (middleware: Array<Middleware4<T1, T2, T3, T4, R>>): OutFunction4<T1, T2, T3, T4, R>
-export function compose <T1, T2, T3, T4, T5, R> (middleware: Array<Middleware5<T1, T2, T3, T4, T5, R>>): OutFunction5<T1, T2, T3, T4, T5, R>
-export function compose <R> (middleware: Array<Middleware<R>>): OutFunction<R> {
+export type Middleware <T, U> = (ctx: T, next: Next<T, U>) => U | Promise<U>
+
+/**
+ * Final function has no `next()`.
+ */
+export type Done <T, U> = (ctx: T) => U | Promise<U>
+
+/**
+ * Composed function signature.
+ */
+export type Composed <T, U> = (ctx: T, done: Done<T, U>) => Promise<U>
+
+/**
+ * Default to "debug" mode when in development.
+ */
+const debugMode = process.env.NODE_ENV !== 'production'
+
+/**
+ * Debug mode wrapper for middleware functions.
+ */
+function debugMiddleware <T, U> (middleware: Array<Middleware<T, U>>): Composed<T, U> {
   if (!Array.isArray(middleware)) {
     throw new TypeError(`Expected middleware to be an array, got ${typeof middleware}`)
   }
 
   for (const fn of middleware) {
-    if (typeof fn !== 'function') {
-      throw new TypeError(`Expected middleware to contain functions, got ${typeof fn}`)
+    if (typeof fn !== 'function') { // tslint:disable-line
+      throw new TypeError(`Expected middleware to contain functions, but got ${typeof fn}`)
     }
   }
 
-  return function (...args: any[]) {
-    let index = -1
-    const done = args.pop()
-
-    if (typeof done !== 'function') {
-      throw new TypeError(`Expected the last argument to be \`next()\`, got ${typeof done}`)
+  return function debugComposed (ctx: T, done: Done<T, U>) {
+    if (typeof done !== 'function') { // tslint:disable-line
+      throw new TypeError(`Expected the last argument to be \`done(ctx)\`, but got ${typeof done}`)
     }
 
-    function dispatch (pos: number): Promise<any> {
-      if (pos <= index) {
-        throw new TypeError('`next()` called multiple times')
+    function dispatcher (startIndex: number, ctx: T) {
+      let index = startIndex
+
+      function dispatch (pos: number): Promise<U> {
+        const fn = middleware[pos] || done
+
+        if (pos > middleware.length) {
+          throw new TypeError('Composed `done(ctx)` function should not call `next()`')
+        }
+
+        index = pos
+
+        return new Promise(resolve => {
+          const result = fn(ctx, function next (newCtx?: T) {
+            if (index > pos) throw new TypeError('`next()` called multiple times')
+
+            if (newCtx === undefined) return dispatch(pos + 1)
+
+            return dispatcher(pos + 1, newCtx)
+          })
+
+          if (result === undefined) { // tslint:disable-line
+            throw new TypeError('Expected middleware to return `next()` or a value')
+          }
+
+          return resolve(result)
+        })
       }
 
-      index = pos
-
-      const fn = middleware[pos] || done
-
-      return new Promise(resolve => {
-        return resolve(fn(...args, function next () {
-          return dispatch(pos + 1)
-        }))
-      })
+      return dispatch(startIndex)
     }
 
-    return dispatch(0)
+    return dispatcher(0, ctx)
   }
+}
+
+/**
+ * Production-mode middleware composition (no errors thrown).
+ */
+function composeMiddleware <T, U> (middleware: Array<Middleware<T, U>>): Composed<T, U> {
+  function dispatch (pos: number, ctx: T, done: Done<T, U>): Promise<U> {
+    const fn = middleware[pos]
+
+    if (!fn) return new Promise<U>(resolve => resolve(done(ctx)))
+
+    return new Promise<U>(resolve => {
+      return resolve(fn(ctx, function next (newCtx?: T) {
+        return dispatch(pos + 1, newCtx === undefined ? ctx : newCtx, done)
+      }))
+    })
+  }
+
+  return function composed (ctx, done) {
+    return dispatch(0, ctx, done)
+  }
+}
+
+/**
+ * Compose an array of middleware functions into a single function.
+ */
+export function compose <T, U> (middleware: Array<Middleware<T, U>>, debug = debugMode): Composed<T, U> {
+  return debug ? debugMiddleware(middleware) : composeMiddleware(middleware)
 }

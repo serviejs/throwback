@@ -1,117 +1,198 @@
-import test = require('blue-tape')
-import { compose, NextFunction } from './index'
+import { compose, Next } from './index'
 
-test('async middleware', t => {
-  t.test('middleware', t => {
-    const arr: number[] = []
+describe('throwback', () => {
+  // Run tests on each code path.
+  runTests(false)
+  runTests(true)
 
-    const fn = compose([
-      function (req: any, res: any, next: NextFunction<string>) {
-        arr.push(1)
+  describe('debug mode', () => {
+    it('should select debug mode based on node env by default', () => {
+      const fn = compose([])
+      const expectedName = process.env.NODE_ENV !== 'production' ? 'debugComposed' : 'composed'
 
-        return next().then(value => {
-          arr.push(5)
-
-          t.equal(value, 'propagate')
-
-          return 'done'
-        })
-      },
-      function (req: any, res: any, next: NextFunction<string>) {
-        arr.push(2)
-
-        return next().then(value => {
-          arr.push(4)
-
-          t.equal(value, 'hello')
-
-          return 'propagate'
-        })
-      }
-    ])
-
-    return fn({}, {}, () => {
-      arr.push(3)
-
-      return 'hello'
+      expect(fn.name).toEqual(expectedName)
     })
-      .then(() => {
-        t.deepEqual(arr, [1, 2, 3, 4, 5])
-      })
   })
 
-  t.test('branch middleware by composing', t => {
-    const arr: number[] = []
+  describe('debug errors', () => {
+    it('throw when input is not an array', () => {
+      expect(
+        () => (compose as any)('test', true)
+      ).toThrow(
+        'Expected middleware to be an array, got string'
+      )
+    })
 
-    const fn = compose([
-      compose([
-        function (ctx: any, next: NextFunction<void>) {
-          arr.push(1)
+    it('throw when values are not functions', () => {
+      expect(
+        () => (compose as any)([1, 2, 3], true)
+      ).toThrow(
+        'Expected middleware to contain functions, but got number'
+      )
+    })
 
-          return next().catch(() => {
-            arr.push(3)
-          })
-        },
-        function (ctx: any, next: NextFunction<void>) {
-          arr.push(2)
+    it('throw when next is not a function', () => {
+      const fn = compose([], true)
 
-          return Promise.reject<void>(new Error('Boom!'))
+      expect(
+        () => (fn as any)(true)
+      ).toThrow(
+        'Expected the last argument to be `done(ctx)`, but got undefined'
+      )
+    })
+
+    it('throw when calling next() multiple times', async () => {
+      const fn = compose([
+        function (value: any, next: Next<any, any>) {
+          return next().then(() => next())
         }
-      ]),
-      function (ctx: any, next: NextFunction<void>) {
-        arr.push(4)
+      ], true)
 
-        return next()
-      }
-    ])
+      await expect(fn({}, () => Promise.resolve())).rejects.toEqual(
+        new Error('`next()` called multiple times')
+      )
+    })
 
-    return fn({}, (): void => undefined)
-      .then(() => {
-        t.deepEqual(arr, [1, 2, 3])
-      })
-  })
+    it('should throw if final function attempts to call `next()`', async () => {
+      const fn = compose([], true)
 
-  t.test('throw when input is not an array', t => {
-    t.throws(
-      () => (compose as any)('test'),
-      'Expected middleware to be an array, got string'
-    )
+      await expect(fn({}, ((ctx: any, next: any) => next()) as any)).rejects.toEqual(
+        new TypeError('Composed `done(ctx)` function should not call `next()`')
+      )
+    })
 
-    t.end()
-  })
+    it('should throw if function returns `undefined`', async () => {
+      const fn = compose([
+        function (ctx) { /* Ignore. */ }
+      ], true)
 
-  t.test('throw when values are not functions', t => {
-    t.throws(
-      () => (compose as any)([1, 2, 3]),
-      'Expected middleware to contain functions, got number'
-    )
-
-    t.end()
-  })
-
-  t.test('throw when next is not a function', t => {
-    const fn = compose([])
-
-    t.throws(
-      () => fn(true as any),
-      'Expected the last argument to be `next()`, got boolean'
-    )
-
-    t.end()
-  })
-
-  t.test('throw when calling next() multiple times', t => {
-    const fn = compose([
-      function (value: any, next: NextFunction<any>) {
-        return next().then(next)
-      }
-    ])
-
-    t.plan(1)
-
-    return fn({}, (): void => undefined)
-      .catch(err => {
-        t.equal(err.message, '`next()` called multiple times')
-      })
+      await expect(fn(true, () => Promise.resolve())).rejects.toEqual(
+        new TypeError('Expected middleware to return `next()` or a value')
+      )
+    })
   })
 })
+
+/**
+ * Execute tests in each "mode".
+ */
+function runTests (debugMode: boolean) {
+  describe(`compose middleware with debug mode: ${debugMode}`, () => {
+    it('should compose middleware functions', async () => {
+      const arr: number[] = []
+
+      const fn = compose([
+        function (ctx: any, next: Next<any, string>) {
+          arr.push(1)
+
+          return next().then(value => {
+            arr.push(5)
+
+            expect(value).toEqual('propagate')
+
+            return 'done'
+          })
+        },
+        function (ctx: any, next: Next<any, string>) {
+          arr.push(2)
+
+          return next().then(value => {
+            arr.push(4)
+
+            expect(value).toEqual('hello')
+
+            return 'propagate'
+          })
+        }
+      ], debugMode)
+
+      await fn({}, () => {
+        arr.push(3)
+
+        return 'hello'
+      })
+
+      expect(arr).toEqual([1, 2, 3, 4, 5])
+    })
+
+    it('branch middleware by composing', async () => {
+      const arr: number[] = []
+
+      const fn = compose([
+        compose([
+          function (ctx: any, next: Next<any, void>) {
+            arr.push(1)
+
+            return next().catch(() => {
+              arr.push(3)
+            })
+          },
+          function (ctx: any, next: Next<any, void>) {
+            arr.push(2)
+
+            return Promise.reject<void>(new Error('Boom!'))
+          }
+        ], debugMode),
+        function (ctx: any, next: Next<any, void>) {
+          arr.push(4)
+
+          return next()
+        }
+      ], debugMode)
+
+      await fn({}, (): void => undefined)
+
+      expect(arr).toEqual([1, 2, 3])
+    })
+
+    it('should compose multiple layers', async () => {
+      const arr: number[] = []
+
+      function middleware (n: number, next: Next<number, number>) {
+        arr.push(n)
+
+        return next(n + 1)
+      }
+
+      const fn = compose([
+        middleware,
+        compose([
+          compose([
+            middleware,
+            middleware
+          ], debugMode),
+          middleware
+        ], debugMode),
+        compose([
+          middleware
+        ], debugMode)
+      ], debugMode)
+
+      const res = await fn(0, ctx => ctx)
+
+      expect(res).toEqual(5)
+      expect(arr).toEqual([0, 1, 2, 3, 4])
+    })
+
+    it('should replace context object', async () => {
+      type Ctx = { original: boolean }
+
+      const fn = compose([
+        async function (ctx: Ctx, next: Next<Ctx, boolean>) {
+          expect(ctx.original).toBe(true)
+
+          const res = await next()
+
+          expect(ctx.original).toBe(true)
+
+          return res
+        },
+        function (ctx: Ctx, next: Next<Ctx, boolean>) {
+          return next({ original: false })
+        }
+      ], debugMode)
+
+      expect(await fn({ original: true }, ctx => ctx.original)).toEqual(false)
+    })
+  })
+}
