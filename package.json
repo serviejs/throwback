@@ -1,6 +1,6 @@
 {
   "name": "throwback",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Simple asynchronous middleware pattern",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
