@@ -1,12 +1,12 @@
 /**
  * Next function supports optional `ctx` replacement for following middleware.
  */
-export type Next <T, U> = (ctx?: T) => Promise<U>
+export type Next <T> = () => Promise<T>
 
 /**
  * Middleware function pattern.
  */
-export type Middleware <T, U> = (ctx: T, next: Next<T, U>) => U | Promise<U>
+export type Middleware <T, U> = (ctx: T, next: Next<U>) => U | Promise<U>
 
 /**
  * Final function has no `next()`.
@@ -37,46 +37,40 @@ function debugMiddleware <T, U> (middleware: Array<Middleware<T, U>>): Composed<
     }
   }
 
-  return function debugComposed (ctx: T, done: Done<T, U>) {
+  return function composedDebug (ctx: T, done: Done<T, U>) {
     if (typeof done !== 'function') { // tslint:disable-line
       throw new TypeError(`Expected the last argument to be \`done(ctx)\`, but got ${typeof done}`)
     }
 
-    function dispatcher (startIndex: number, ctx: T) {
-      let index = startIndex
+    let index = 0
 
-      function dispatch (pos: number): Promise<U> {
-        const fn = middleware[pos] || done
+    function dispatch (pos: number): Promise<U> {
+      const fn = middleware[pos] || done
 
-        index = pos
+      index = pos
 
-        return new Promise(resolve => {
-          const result = fn(ctx, function next (newCtx?: T) {
-            if (pos < index) {
-              throw new TypeError('`next()` called multiple times')
-            }
-
-            if (pos > middleware.length) {
-              throw new TypeError('Composed `done(ctx)` function should not call `next()`')
-            }
-
-            if (newCtx === undefined) return dispatch(pos + 1)
-
-            return dispatcher(pos + 1, newCtx)
-          })
-
-          if (result === undefined) { // tslint:disable-line
-            throw new TypeError('Expected middleware to return `next()` or a value')
+      return new Promise(resolve => {
+        const result = fn(ctx, function next () {
+          if (pos < index) {
+            throw new TypeError('`next()` called multiple times')
           }
 
-          return resolve(result)
-        })
-      }
+          if (pos > middleware.length) {
+            throw new TypeError('Composed `done(ctx)` function should not call `next()`')
+          }
 
-      return dispatch(startIndex)
+          return dispatch(pos + 1)
+        })
+
+        if (result === undefined) { // tslint:disable-line
+          throw new TypeError('Expected middleware to return `next()` or a value')
+        }
+
+        return resolve(result)
+      })
     }
 
-    return dispatcher(0, ctx)
+    return dispatch(index)
   }
 }
 
@@ -90,8 +84,8 @@ function composeMiddleware <T, U> (middleware: Array<Middleware<T, U>>): Compose
     if (!fn) return new Promise<U>(resolve => resolve(done(ctx)))
 
     return new Promise<U>(resolve => {
-      return resolve(fn(ctx, function next (newCtx?: T) {
-        return dispatch(pos + 1, newCtx === undefined ? ctx : newCtx, done)
+      return resolve(fn(ctx, function next () {
+        return dispatch(pos + 1, ctx, done)
       }))
     })
   }

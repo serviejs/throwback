@@ -70,28 +70,6 @@ createServer(function (req, res) {
 }).listen(3000)
 ```
 
-### Advanced
-
-Did you know `next(ctx?)` accepts an optional `ctx` argument which will override `ctx` for all following middleware functions? This enables advanced functionality such as `Request` cloning and retries in [`popsicle`](https://github.com/serviejs/popsicle).
-
-```js
-async function retryRequest (req, next) {
-  let retries = 5
-
-  while (retries--) {
-    try {
-      const res = await next(req.clone())
-
-      return res
-    } catch (e) {
-      continue
-    }
-  }
-
-  throw new Error('Retry limit exceeded')
-}
-```
-
 ## Use Cases
 
 * HTTP requests (e.g. [`popsicle`](https://github.com/serviejs/popsicle))

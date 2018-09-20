@@ -8,7 +8,7 @@ describe('throwback', () => {
   describe('debug mode', () => {
     it('should select debug mode based on node env by default', () => {
       const fn = compose([])
-      const expectedName = process.env.NODE_ENV !== 'production' ? 'debugComposed' : 'composed'
+      const expectedName = process.env.NODE_ENV !== 'production' ? 'composedDebug' : 'composed'
 
       expect(fn.name).toEqual(expectedName)
     })
@@ -43,7 +43,7 @@ describe('throwback', () => {
 
     it('throw when calling next() multiple times', async () => {
       const fn = compose([
-        function (value: any, next: Next<any, any>) {
+        function (value: any, next: Next<any>) {
           return next().then(() => next())
         }
       ], true)
@@ -82,7 +82,7 @@ function runTests (debugMode: boolean) {
       const arr: number[] = []
 
       const fn = compose([
-        function (ctx: any, next: Next<any, string>) {
+        function (ctx: any, next: Next<string>) {
           arr.push(1)
 
           return next().then(value => {
@@ -93,7 +93,7 @@ function runTests (debugMode: boolean) {
             return 'done'
           })
         },
-        function (ctx: any, next: Next<any, string>) {
+        function (ctx: any, next: Next<string>) {
           arr.push(2)
 
           return next().then(value => {
@@ -120,20 +120,20 @@ function runTests (debugMode: boolean) {
 
       const fn = compose([
         compose([
-          function (ctx: any, next: Next<any, void>) {
+          function (ctx: any, next: Next<void>) {
             arr.push(1)
 
             return next().catch(() => {
               arr.push(3)
             })
           },
-          function (ctx: any, next: Next<any, void>) {
+          function (ctx: any, next: Next<void>) {
             arr.push(2)
 
             return Promise.reject<void>(new Error('Boom!'))
           }
         ], debugMode),
-        function (ctx: any, next: Next<any, void>) {
+        function (ctx: any, next: Next<void>) {
           arr.push(4)
 
           return next()
@@ -143,56 +143,6 @@ function runTests (debugMode: boolean) {
       await fn({}, (): void => undefined)
 
       expect(arr).toEqual([1, 2, 3])
-    })
-
-    it('should compose multiple layers', async () => {
-      const arr: number[] = []
-
-      function middleware (n: number, next: Next<number, number>) {
-        arr.push(n)
-
-        return next(n + 1)
-      }
-
-      const fn = compose([
-        middleware,
-        compose([
-          compose([
-            middleware,
-            middleware
-          ], debugMode),
-          middleware
-        ], debugMode),
-        compose([
-          middleware
-        ], debugMode)
-      ], debugMode)
-
-      const res = await fn(0, ctx => ctx)
-
-      expect(res).toEqual(5)
-      expect(arr).toEqual([0, 1, 2, 3, 4])
-    })
-
-    it('should replace context object', async () => {
-      type Ctx = { original: boolean }
-
-      const fn = compose([
-        async function (ctx: Ctx, next: Next<Ctx, boolean>) {
-          expect(ctx.original).toBe(true)
-
-          const res = await next()
-
-          expect(ctx.original).toBe(true)
-
-          return res
-        },
-        function (ctx: Ctx, next: Next<Ctx, boolean>) {
-          return next({ original: false })
-        }
-      ], debugMode)
-
-      expect(await fn({ original: true }, ctx => ctx.original)).toEqual(false)
     })
   })
 }
