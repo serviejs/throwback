@@ -18,63 +18,63 @@ npm install throwback --save
 Compose asynchronous (promise-returning) functions.
 
 ```js
-const { compose } = require('throwback')
+const { compose } = require("throwback");
 
 const fn = compose([
-  async function (ctx, next) {
-    console.log(1)
+  async function(ctx, next) {
+    console.log(1);
 
     try {
-      await next()
+      await next();
     } catch (err) {
-      console.log('throwback', err)
+      console.log("throwback", err);
     }
 
-    console.log(4)
+    console.log(4);
   },
-  async function (ctx, next) {
-    console.log(2)
+  async function(ctx, next) {
+    console.log(2);
 
-    return next()
+    return next();
   }
-])
+]);
 
 // Callback runs at the end of the stack, before
 // the middleware bubbles back to the beginning.
-fn({}, function (ctx) {
-  console.log(3)
+fn({}, function(ctx) {
+  console.log(3);
 
-  ctx.status = 404
-})
+  ctx.status = 404;
+});
 ```
 
-**Tip:** In development mode, `debug` mode will throw errors when you do something unexpected. In production, faster non-error code paths are used.
+**Tip:** In development (`NODE_ENV !== "production"`), `compose` will throw errors when you do something unexpected. In production, the faster non-error code paths are used.
 
 ### Example
 
 Build a micro HTTP server!
 
 ```js
-const { createServer } = require('http')
-const finalhandler = require('finalhandler') // Example only, not compatible with single `ctx` arg.
-const { compose } = require('throwback')
+const { createServer } = require("http");
+const finalhandler = require("finalhandler"); // Example only, not compatible with single `ctx` arg.
+const { compose } = require("throwback");
 
 const app = compose([
-  function ({ req, res }, next) {
-    res.end('Hello world!')
+  function({ req, res }, next) {
+    res.end("Hello world!");
   }
-])
+]);
 
-createServer(function (req, res) {
-  return app({ req, res }, finalhandler())
-}).listen(3000)
+createServer(function(req, res) {
+  return app({ req, res }, finalhandler());
+}).listen(3000);
 ```
 
 ## Use Cases
 
-* HTTP requests (e.g. [`popsicle`](https://github.com/serviejs/popsicle))
-* HTTP servers (e.g. [`servie`](https://github.com/serviejs/servie))
-* Processing pipelines (e.g. [`scrappy`](https://github.com/blakeembrey/node-scrappy))
+- HTTP requests (e.g. [`popsicle`](https://github.com/serviejs/popsicle))
+- HTTP servers (e.g. [`servie`](https://github.com/serviejs/servie))
+- Processing pipelines (e.g. [`scrappy`](https://github.com/blakeembrey/node-scrappy))
 
 ## Inspiration
 
